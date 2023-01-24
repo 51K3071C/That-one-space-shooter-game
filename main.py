@@ -12,9 +12,13 @@ class Ship(pygame.sprite.Sprite):
         #get rect
         self.rect = self.image.get_rect(center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT /2))
 
+        self.mask = pygame.mask.from_surface(self.image)
+
         self.can_shoot = True
         self.shoot_time = None
 
+        
+        
     def laser_timer(self):
         if not self.can_shoot:
             current_time = pygame.time.get_ticks()
@@ -31,11 +35,19 @@ class Ship(pygame.sprite.Sprite):
             self.can_shoot = False
             self.shoot_time = pygame.time.get_ticks()
             Laser(self.rect.midtop, laser_group)
+            
+    def meteor_collision(self):
+        if pygame.sprite.spritecollide(self, meteor_group, False, pygame.sprite.collide_mask):
+            pygame.quit()
+            sys.exit()
+        
     def update(self):
         self.input_position()
         self.laser_shoot()
         self.laser_timer()
-
+        self.meteor_collision()
+    
+    
 class Laser(pygame.sprite.Sprite):
     """Laser Stuffage"""
     def __init__(self, pos, groups):
@@ -45,10 +57,18 @@ class Laser(pygame.sprite.Sprite):
         self.pos = pygame.math.Vector2(self.rect.topleft)
         self.direction = pygame.math.Vector2(0,-1)
         self.speed = 600
+        self.mask = pygame.mask.from_surface(self.image)
+    def meteor_collision(self):
+        pygame.sprite.spritecollide(self, meteor_group, True)
+        self.kill()
     def update(self):
         self.pos += self.direction * self.speed * dt
         self.rect.topleft = (round(self.pos.x), round(self.pos.y))
-
+        self.meteor_collision()
+    def meteor_collision(self):
+        if pygame.sprite.spritecollide(self,meteor_group,False,pygame.sprite.collide_mask):
+            self.kill()
+        
 class Meteor(pygame.sprite.Sprite):
     """Meteor Stuffage"""
     def __init__(self, pos, groups):
@@ -58,10 +78,12 @@ class Meteor(pygame.sprite.Sprite):
         self.pos = pygame.math.Vector2(self.rect.topleft)
         self.direction = pygame.math.Vector2(uniform(-0.5, 0.5), 1)
         self.speed = randint(400, 600)
+        self.mask = pygame.mask.from_surface(self.image)
     def update(self):
         self.pos += self.direction * self.speed * dt
         self.rect.topleft = (round(self.pos.x), round(self.pos.y))
-
+        if self.rect.top > WINDOW_HEIGHT:
+            self.kill()
 class Score:
     """Score Stuffage"""
     def __init__(self):
